@@ -12,7 +12,7 @@ const timezone = require('dayjs/plugin/timezone');
 const cloudinary = require("cloudinary").v2;
 const sharp = require("sharp");
 const { exec } = require("child_process");
-const { off } = require("process");
+const { off, throwDeprecation } = require("process");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const app = express();
@@ -264,7 +264,7 @@ const uploadToCloudinary = async (file) => {
   
     try {
       const parsedUrlsToDelete = JSON.parse(imagesToDelete);
-      
+      console.log("Imagenes a eliminar: ", parsedUrlsToDelete)
       // Iniciar la transacción
       await client.query("BEGIN");
   
@@ -274,7 +274,7 @@ const uploadToCloudinary = async (file) => {
           newImages.map(async (image) => await uploadToCloudinary(image))
         );
         if (imageUrls.length === 0) {
-          return res.status(500).json({ message: "Error al subir las nuevas imágenes" });
+          throw new Error("Error al subir las nuevas imagenes")
         }
       }
   
@@ -290,6 +290,8 @@ const uploadToCloudinary = async (file) => {
             ); // Eliminar de la base de datos
           })
         );
+
+        console.log("Respuesta de eliminado: ", responseDeleteImages)
       }
   
       // 3. Insertar las nuevas imágenes subidas
